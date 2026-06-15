@@ -374,7 +374,7 @@ const characterTypes = {
 /* ===================== SHEET CONNECTION ===================== */
 // Google Apps Script Web App のURLをここに設定すると、診断完了時に結果が
 // Googleスプレッドシートへ自動送信されます。未設定（空文字）の場合は送信されません。
-const GAS_URL = "";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbzOKAJLb-wV2ZkvKmr1HfDpGhgsQoQhjEdS2ECfpk77EnFNpEYzWE5Eemj1LmYVWkhL/exec";
 
 function sendResultToSheet(payload){
   if(!GAS_URL) return;
