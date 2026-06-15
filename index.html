@@ -371,6 +371,22 @@ const characterTypes = {
   "S-E-G": { icon:"target", name:"計画的な目標達成タイプ", desc:"目標達成のために最短ルートを知りたいタイプ。学習の進め方に迷いやすいので、最初にしっかりした学習計画を立てることが成功への近道です。" },
 };
 
+/* ===================== SHEET CONNECTION ===================== */
+// Google Apps Script Web App のURLをここに設定すると、診断完了時に結果が
+// Googleスプレッドシートへ自動送信されます。未設定（空文字）の場合は送信されません。
+const GAS_URL = "";
+
+function sendResultToSheet(payload){
+  if(!GAS_URL) return;
+  try{
+    fetch(GAS_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(payload),
+    }).catch(()=>{});
+  }catch(e){}
+}
+
 /* ===================== STATE ===================== */
 const profileAnswers = new Array(profileQuestions.length).fill(null);
 const quizAnswers = new Array(quizQuestions.length).fill(null);
@@ -636,6 +652,16 @@ function renderResult(){
   const targetScore = calcTargetScore(currentScore);
   const plan = calcStudyPlan(currentScore, targetScore);
   const leapassMsg = calcLeapassSupport();
+
+  const correctCount = quizQuestions.reduce((sum,q,i)=> sum + (quizAnswers[i]===q.answer ? 1 : 0), 0);
+  sendResultToSheet({
+    profile: profileQuestions.map((q,i)=> q.options[profileAnswers[i]]),
+    score: currentScore,
+    target: targetScore,
+    character: character.name,
+    correctCount: correctCount,
+    quizResults: quizQuestions.map((q,i)=> quizAnswers[i]===q.answer),
+  });
 
   card.innerHTML = `
     <div class="section-tag">診断結果</div>
