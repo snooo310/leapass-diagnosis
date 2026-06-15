@@ -20,8 +20,11 @@ function doPost(e) {
   if (sheet.getLastRow() === 0) {
     const headers = [
       "タイムスタンプ",
-      "性別", "年齢", "職業", "学習時間", "学習目的", "TOEIC受験目的", "悩み", "理想の未来",
-      "推定TOEICスコア", "目標スコア", "キャラクタータイプ", "正答数(/20)"
+      "LINE表示名", "性別", "年齢", "職業", "学習時間", "学習目的", "TOEIC受験目的", "悩み", "理想の未来",
+      "推定TOEICスコア", "目標スコア",
+      "キャラクタータイプ", "キャラクタータイプの説明",
+      "おすすめの勉強方法", "おすすめ教材", "目標達成までの勉強期間", "LeaPASSで補えるところ",
+      "正答数(/20)"
     ];
     for (let i = 1; i <= 20; i++) headers.push("Q" + i);
     sheet.appendRow(headers);
@@ -33,6 +36,11 @@ function doPost(e) {
     data.score,
     data.target,
     data.character,
+    data.characterDesc,
+    data.studyMethods,
+    data.materials,
+    data.period,
+    data.leapassSupport,
     data.correctCount,
   ];
 

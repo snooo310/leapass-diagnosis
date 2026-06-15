@@ -121,6 +121,22 @@
     font-weight:700;
     color:var(--navy);
   }
+  .text-input{
+    border:2px solid var(--border);
+    background:#fff;
+    border-radius:14px;
+    padding:14px 16px;
+    font-size:14.5px;
+    color:var(--text-main);
+    font-family:inherit;
+    width:100%;
+    box-sizing:border-box;
+  }
+  .text-input:focus{
+    outline:none;
+    border-color:var(--navy-light);
+    background:#f7fbfe;
+  }
   .option-letter{
     display:inline-flex;
     align-items:center;justify-content:center;
@@ -319,6 +335,12 @@ const quizQuestions = [
 const profileQuestions = [
   {
     section:"あなたについて",
+    q:"LINEの表示名を教えてください。",
+    type:"text",
+    placeholder:"例：山田 太郎"
+  },
+  {
+    section:"あなたについて",
     q:"性別を教えてください。",
     options:["男性","女性","その他・回答しない"]
   },
@@ -436,6 +458,32 @@ function renderStart(){
 function renderProfile(idx){
   const q = profileQuestions[idx];
   const selected = profileAnswers[idx];
+
+  if(q.type === "text"){
+    const hasValue = typeof selected === "string" && selected.trim().length > 0;
+    card.innerHTML = `
+      ${progressHTML(idx+1, profileQuestions.length, `プロフィール ${idx+1} / ${profileQuestions.length}`)}
+      <div class="section-tag">${q.section}</div>
+      <h2>${q.q}</h2>
+      <div class="options">
+        <input type="text" class="text-input" id="textAnswer" placeholder="${q.placeholder ?? ""}" value="${selected ?? ""}">
+      </div>
+      <div class="nav-row">
+        <button class="btn btn-ghost" id="backBtn" ${idx===0?'style="visibility:hidden;"':''}>戻る</button>
+        <button class="btn btn-primary" id="nextBtn" ${hasValue?'':'disabled'}>次へ</button>
+      </div>
+    `;
+    const input = document.getElementById("textAnswer");
+    const nextBtn = document.getElementById("nextBtn");
+    input.oninput = ()=>{
+      profileAnswers[idx] = input.value;
+      nextBtn.disabled = input.value.trim().length === 0;
+    };
+    document.getElementById("backBtn").onclick = ()=>{ step--; render(); };
+    nextBtn.onclick = ()=>{ step++; render(); };
+    return;
+  }
+
   card.innerHTML = `
     ${progressHTML(idx+1, profileQuestions.length, `プロフィール ${idx+1} / ${profileQuestions.length}`)}
     <div class="section-tag">${q.section}</div>
@@ -506,16 +554,16 @@ function calcEstimatedScore(){
 }
 
 function calcCharacter(){
-  // Axis A: 目的 (profileAnswers[4]) -> P (実践派) / S (試験派)
-  const purpose = profileAnswers[4];
+  // Axis A: 目的 (profileAnswers[5]) -> P (実践派) / S (試験派)
+  const purpose = profileAnswers[5];
   const axisA = (purpose === 0 || purpose === 1 || purpose === 2) ? "P" : "S";
 
-  // Axis B: 悩み (profileAnswers[6]) -> C (継続サポート型) / E (効率重視型)
-  const worry = profileAnswers[6];
+  // Axis B: 悩み (profileAnswers[7]) -> C (継続サポート型) / E (効率重視型)
+  const worry = profileAnswers[7];
   const axisB = (worry === 0 || worry === 3 || worry === 4) ? "C" : "E";
 
-  // Axis C: 学習時間 (profileAnswers[3]) -> A (自走型) / G (サポート型)
-  const studyTime = profileAnswers[3];
+  // Axis C: 学習時間 (profileAnswers[4]) -> A (自走型) / G (サポート型)
+  const studyTime = profileAnswers[4];
   const axisC = (studyTime === 3 || studyTime === 4) ? "A" : "G";
 
   const key = `${axisA}-${axisB}-${axisC}`;
@@ -523,7 +571,7 @@ function calcCharacter(){
 }
 
 function calcTargetScore(currentScore){
-  const toeicPurpose = profileAnswers[5];
+  const toeicPurpose = profileAnswers[6];
   const targets = [730, 730, 860, 600, null];
   let target = targets[toeicPurpose];
   if(target === null){
@@ -538,7 +586,7 @@ function calcTargetScore(currentScore){
 
 function calcStudyPlan(currentScore, targetScore){
   const gap = targetScore - currentScore;
-  const studyTime = profileAnswers[3]; // 0-4, higher = more time
+  const studyTime = profileAnswers[4]; // 0-4, higher = more time
 
   let level, methods, materials;
 
@@ -613,8 +661,8 @@ function calcStudyPlan(currentScore, targetScore){
 }
 
 function calcLeapassSupport(){
-  const worry = profileAnswers[6];
-  const future = profileAnswers[7];
+  const worry = profileAnswers[7];
+  const future = profileAnswers[8];
 
   let worryMsg;
   switch(worry){
@@ -655,10 +703,15 @@ function renderResult(){
 
   const correctCount = quizQuestions.reduce((sum,q,i)=> sum + (quizAnswers[i]===q.answer ? 1 : 0), 0);
   sendResultToSheet({
-    profile: profileQuestions.map((q,i)=> q.options[profileAnswers[i]]),
+    profile: profileQuestions.map((q,i)=> q.type === "text" ? profileAnswers[i] : q.options[profileAnswers[i]]),
     score: currentScore,
     target: targetScore,
     character: character.name,
+    characterDesc: character.desc,
+    studyMethods: plan.methods.join("\n"),
+    materials: plan.materials.join("\n"),
+    period: plan.period,
+    leapassSupport: leapassMsg.replace(/<[^>]+>/g, ""),
     correctCount: correctCount,
     quizResults: quizQuestions.map((q,i)=> quizAnswers[i]===q.answer),
   });
